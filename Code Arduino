@@ -1,0 +1,49 @@
+
+#include <Servo.h> // on inclut la bibliothèque qui fait fonctionner le servomoteur
+#include <RFID.h> //on inclut la bibliothèque RFID servant au scan du badge de la carte
+#include <SPI.h> // de même pour  la bibliothèque SPI étant un complément de la RFID
+int LED_VERTE = 4; //on dit que la LED verte est sur la broche 4 de la carte
+int LED_ROUGE = 3;  //on dit que la LED rouge est sur la borche 3 de la carte
+Servo porte; //on nomme notre servomoteur porte
+RFID monModuleRFID(10,9); // on dit que le module RFID se trouve sur les broches 10 et 9 de la carte
+int UID[5]; //on créé une varibale pour un identifiant de badge
+int UID_Carte_Connu[5]={137,97,234,194,192}; //on dit que notre variable correspond à tel badge (identifiant du badge)
+void setup() { 
+  Serial.begin(9600); // on déclare le nombre de baud du moniteur série
+  SPI.begin(); //on met en route le la librairie SPI
+  monModuleRFID.init(); // on initialise la variable du module RFID
+  pinMode(LED_VERTE, OUTPUT); // on dit que la LED verte est une sortie 
+  pinMode(LED_ROUGE, OUTPUT); // on dit que la LED rouge est aussi une sortie
+  digitalWrite(LED_VERTE, LOW); // de base la LEDE verte est éteinte
+  digitalWrite(LED_ROUGE, LOW); // également pour la led  LED rouge
+  porte.attach(6); //on dit que le servomoteur est sur la broche 6 de la carte
+}
+
+void loop() { // on arrive dans la boucle 
+  porte.write(0); // on dit que quand il ne se passe rien, le servomoteur est à 0°
+  digitalWrite(LED_ROUGE, HIGH); // on dit que la LED rouge est allumé en permanence tant qu'il y a rien 
+  digitalWrite(LED_VERTE, LOW); // la LED verte contrairement à la rouge est éteinte
+  if (monModuleRFID.isCard()) //si une carte ou un badge est détecté
+  {
+    if (monModuleRFID.readCardSerial()) // et si la lecture est possible
+    {
+      Serial.print("L'UID est: "); // on écrit dans le moniteur série ce qui est entre guillemet 
+      for(int i=0;i<=4;i++) //on décode l'UID du badge ou de la carte 
+      {
+        UID[i]=monModuleRFID.serNum[i]; // alors on donne le nom du badge détecté à la variable du module RFID
+        Serial.print(UID[i],DEC); // on donne donc dans le moniteur série l'identifiant du badge détecté
+        Serial.print(".");
+      }
+      Serial.println("");
+    }
+    if (UID[0] == UID_Carte_Connu[0] && UID[1] == UID_Carte_Connu[1] && UID[2] == UID_Carte_Connu[2] && UID[3] == UID_Carte_Connu[3] && UID[4] == UID_Carte_Connu[4]){ // on compare le badge lu et la liste des badges connus 
+      digitalWrite(LED_VERTE, HIGH); // si c'est le cas, on allume la LED verte
+      digitalWrite(LED_ROUGE, LOW); // on éteint la LED rouge
+      porte.write(90); //le servomoteur tourne de 90°
+      Serial.println("UID carte connu"); // et on affiche dans le moniteur série que le badge scanné est connu
+      delay(500); // on attend 500 ms pour laisser le temps de gérer les LEDs
+    }
+    monModuleRFID.halt(); 
+  }
+  delay(1); //puis on atteint 1 ms pour ensuite répéter la lecture du badge en boucle
+}
