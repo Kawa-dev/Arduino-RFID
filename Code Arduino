@@ -1,4 +1,5 @@
-
+#include <LiquidCrystal_I2C.h> //on inclut la librairie permettant de faire fonctionner l'écran LCD 
+#include <Wire.h> //on inclut une librairie complémentaire de la librairie liquidcrystal
 #include <Servo.h> // on inclut la bibliothèque qui fait fonctionner le servomoteur
 #include <RFID.h> //on inclut la bibliothèque RFID servant au scan du badge de la carte
 #include <SPI.h> // de même pour  la bibliothèque SPI étant un complément de la RFID
@@ -6,6 +7,7 @@ int LED_VERTE = 4; //on dit que la LED verte est sur la broche 4 de la carte
 int LED_ROUGE = 3;  //on dit que la LED rouge est sur la borche 3 de la carte
 Servo porte; //on nomme notre servomoteur porte
 RFID monModuleRFID(10,9); // on dit que le module RFID se trouve sur les broches 10 et 9 de la carte
+LiquidCrystal_I2C lcd(0x27, 16, 2);// on donne l'adresse de l'écran LCD, ainsi que les pins de la carte 
 int UID[5]; //on créé une varibale pour un identifiant de badge
 int UID_Carte_Connu[5]={137,97,234,194,192}; //on dit que notre variable correspond à tel badge (identifiant du badge)
 void setup() { 
@@ -17,9 +19,12 @@ void setup() {
   digitalWrite(LED_VERTE, LOW); // de base la LEDE verte est éteinte
   digitalWrite(LED_ROUGE, LOW); // également pour la led  LED rouge
   porte.attach(6); //on dit que le servomoteur est sur la broche 6 de la carte
+  lcd.backlight();
 }
 
 void loop() { // on arrive dans la boucle 
+  lcd.clear(); //on efface l'ancien texte de l'écran
+  lcd.print("Detection..."); // on demande d'afficher le texte suivant
   porte.write(0); // on dit que quand il ne se passe rien, le servomoteur est à 0°
   digitalWrite(LED_ROUGE, HIGH); // on dit que la LED rouge est allumé en permanence tant qu'il y a rien 
   digitalWrite(LED_VERTE, LOW); // la LED verte contrairement à la rouge est éteinte
@@ -40,6 +45,8 @@ void loop() { // on arrive dans la boucle
       digitalWrite(LED_VERTE, HIGH); // si c'est le cas, on allume la LED verte
       digitalWrite(LED_ROUGE, LOW); // on éteint la LED rouge
       porte.write(90); //le servomoteur tourne de 90°
+      lcd.clear(); //on efface l'ancien texte 
+      lcd.print("Acces autorise"); //on affiche le texte suivant
       Serial.println("UID carte connu"); // et on affiche dans le moniteur série que le badge scanné est connu
       delay(500); // on attend 500 ms pour laisser le temps de gérer les LEDs
     }
